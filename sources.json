@@ -1,0 +1,8 @@
+{
+  "apps": {
+    "lemon-music": {
+      "repo": "jia070310/lemon-muisc",
+      "archs": ["x86", "arm"]
+    }
+  }
+}

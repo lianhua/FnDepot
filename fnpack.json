@@ -29,9 +29,21 @@
       "distributor_url": "https://github.com/jia070310/lemon-muisc",
       "bug_report_url": "https://github.com/jia070310/lemon-muisc/issues",
       "releases": {
-        "0.0.0": {
-          "updated_at": "2026-10-15T00:00:00+08:00",
-          "packages": {}
+        "1.2.17.7": {
+          "updated_at": "2026-10-13T11:30:10Z",
+          "os_min_version": "1.1.8",
+          "packages": {
+            "x86": {
+              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/assets/lemon-music-1.2.17.7-x86.fpk",
+              "sha256": "0f2d06e334f859d3e296827b42f78d41d85527fa4fd048a8a913b29095b8f424",
+              "size": 5515619
+            },
+            "arm": {
+              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/assets/lemon-music-1.2.17.7-arm.fpk",
+              "sha256": "1514c0d39d5ae15293b05eeeb5c274022dded7b996debc822852d0977fd41836",
+              "size": 5515623
+            }
+          }
         }
       }
     }

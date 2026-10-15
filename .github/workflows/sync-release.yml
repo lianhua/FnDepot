@@ -6,9 +6,6 @@ on:
   workflow_dispatch:
 
 env:
-  UPSTREAM_REPO: jia070310/lemon-muisc
-  APP_NAME: lemon-music          # 必须与上游 FPK manifest 的 appname 一致
-  FPK_ARCHS: "x86 arm"            # 需要同步的架构
   RAW_BASE: https://raw.githubusercontent.com/lianhua/FnDepot/main
 
 jobs:
@@ -19,128 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 获取上游最新 release
-        id: rel
+      - name: 同步上游 fpk 并更新索引
+        run: python3 .github/scripts/sync.py
+
+      - name: 提交变更
         run: |
-          curl -fsSL "https://api.github.com/repos/${UPSTREAM_REPO}/releases/latest" -o /tmp/release.json
-          ver=$(jq -r '.tag_name | ltrimstr("v")' /tmp/release.json)
-          if [ -z "$ver" ] || [ "$ver" = "null" ]; then
-            echo "::error::获取 ${UPSTREAM_REPO} 最新 release 失败"
-            exit 1
-          fi
-          echo "ver=$ver" >> "$GITHUB_OUTPUT"
-          echo "published=$(jq -r '.published_at' /tmp/release.json)" >> "$GITHUB_OUTPUT"
-          echo "可用资产:"
-          jq -r '.assets[] | "  \(.name)  (\(.size) bytes)"' /tmp/release.json
-
-      - name: 检查是否需要同步
-        id: check
-        run: |
-          cur=$(jq -r --arg a "$APP_NAME" '.apps[$a].releases | keys[0] // "none"' fnpack.json)
-          echo "源内版本: $cur  |  上游版本: ${{ steps.rel.outputs.ver }}"
-          if [ "$cur" = "${{ steps.rel.outputs.ver }}" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "已是最新，跳过"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: 下载各架构 fpk 并提取元数据
-        if: steps.check.outputs.changed == 'true'
-        env:
-          VER: ${{ steps.rel.outputs.ver }}
-        run: |
-          set -eu
-          mkdir -p assets
-
-          # 1. 按架构下载
-          for arch in $FPK_ARCHS; do
-            url=$(jq -r '.assets[].browser_download_url' /tmp/release.json \
-                  | grep -E -- "-${arch}\.fpk$" | head -n1 || true)
-            if [ -z "$url" ]; then
-              echo "  [${arch}] release 中没有该架构包，跳过"
-              continue
-            fi
-            curl -fsSL -o "assets/${APP_NAME}-${VER}-${arch}.fpk" "$url"
-            echo "  [${arch}] 已下载 $(stat -c%s "assets/${APP_NAME}-${VER}-${arch}.fpk") bytes"
-          done
-
-          # 2. 解包任一 fpk，取 manifest 元数据（manifest 是空格对齐的 key = value）
-          sample=""
-          for f in assets/${APP_NAME}-${VER}-*.fpk; do
-            if [ -f "$f" ]; then sample="$f"; break; fi
-          done
-          if [ -z "$sample" ]; then
-            echo "::error::没有下载到任何 fpk，请检查 FPK_ARCHS 与上游资产名"
-            exit 1
-          fi
-          echo "  解包样本: $sample"
-          rm -rf /tmp/fpkext && mkdir -p /tmp/fpkext
-          tar -xzf "$sample" -C /tmp/fpkext
-          # 用 awk 而非 sed|head，避免 pipefail 下被 SIGPIPE 打断
-          get() { awk -v k="$1" '{
-              line=$0; eq=index(line,"=");
-              if (eq==0) next;
-              key=substr(line,1,eq-1); val=substr(line,eq+1);
-              gsub(/^[ \t]+|[ \t\r]+$/,"",key);
-              gsub(/^[ \t]+/,"",val);
-              if (key==k) { sub(/[ \t\r]+$/,"",val); print val; exit }
-          }' /tmp/fpkext/manifest; }
-
-          cp /tmp/fpkext/ICON.PNG     assets/ICON.PNG
-          cp /tmp/fpkext/ICON_256.PNG assets/ICON_256.PNG
-
-          echo "display_name=$(get display_name)"     >> "$GITHUB_OUTPUT"
-          echo "service_port=$(get service_port)"     >> "$GITHUB_OUTPUT"
-          echo "osmin=$(get os_min_version)"          >> "$GITHUB_OUTPUT"
-          # desc 含 HTML 且很长，用 base64 传递，避免破坏 GITHUB_OUTPUT 的行格式
-          printf 'desc=%s' "$(get desc | tr '\n' ' ' | base64 -w0)" >> "$GITHUB_OUTPUT"
-
-          # 3. 构造 packages（下载地址指向本仓库 raw，方便用户配国内加速）
-          PKG='{}'
-          for arch in $FPK_ARCHS; do
-            f="assets/${APP_NAME}-${VER}-${arch}.fpk"
-            [ -f "$f" ] || continue
-            sha=$(sha256sum "$f"); sha=${sha%% *}
-            size=$(stat -c%s "$f")
-            PKG=$(echo "$PKG" | jq --arg a "$arch" --arg u "${RAW_BASE}/assets/${APP_NAME}-${VER}-${arch}.fpk" \
-                               --arg h "$sha" --argjson s "$size" \
-                               '. + {($a): {download_url:$u, sha256:$h, size:$s}}')
-          done
-          # GITHUB_OUTPUT 不接受多行值，必须用 jq -c 压成单行
-          echo "packages=$(echo "$PKG" | jq -c .)" >> "$GITHUB_OUTPUT"
-
-      - name: 更新 fnpack.json 并提交
-        if: steps.check.outputs.changed == 'true'
-        env:
-          VER: ${{ steps.rel.outputs.ver }}
-          PUBLISHED: ${{ steps.rel.outputs.published }}
-          DISPLAY: ${{ steps.display_name }}
-          PORT: ${{ steps.service_port }}
-          OSMIN: ${{ steps.osmin }}
-          DESC_B64: ${{ steps.desc }}
-          PACKAGES: ${{ steps.packages }}
-        run: |
-          set -eu
-          desc=$(printf '%s' "$DESC_B64" | base64 -d)
-          # releases 整体重建，只保留当前最新版本，避免仓库无限膨胀
-          jq --arg app "$APP_NAME" --arg v "$VER" --arg upd "$PUBLISHED" \
-             --arg name "$DISPLAY" --arg desc "$desc" --arg port "$PORT" \
-             --arg osmin "$OSMIN" --arg base "$RAW_BASE" --argjson pkgs "$PACKAGES" '
-            .schema_version = "2"
-            | .apps[$app].display_name  = $name
-            | .apps[$app].desc           = $desc
-            | .apps[$app].service_port   = $port
-            | .apps[$app].os_min_version = $osmin
-            | .apps[$app].icon_url       = $base + "/assets/ICON.PNG"
-            | .apps[$app].releases       = { ($v): { updated_at: $upd, os_min_version: $osmin, packages: $pkgs } }
-          ' fnpack.json > /tmp/fnpack.json
-          mv /tmp/fnpack.json fnpack.json
-
-          # 删除旧版本安装包，只留最新版
-          find assets -name "${APP_NAME}-*.fpk" ! -name "${APP_NAME}-${VER}-*" -print -delete
-
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "chore(sync): ${APP_NAME} -> v${VER}" || exit 0
+          if git diff --staged --quiet; then
+            echo "无变更，无需提交"
+            exit 0
+          fi
+          git commit -m "chore(sync): update fpk packages from upstream"
           git push
-          echo "已同步 ${APP_NAME} v${VER}"
+          echo "已推送"
