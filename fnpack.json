@@ -1,20 +1,39 @@
 {
-  "myapp": {
-    "display_name": "My App",
-    "version": "1.0.0",
-    "desc": "应用简介，显示在商店列表里。支持\\n换行。",
-    "labels": "工具,开发",
-    "install_type": "存储空间",
-    "size": "20",
-    "platform": ["x86", "arm"],
-    "author": "上游作者名",
-    "author_url": "https://github.com/upstream-owner/upstream-repo",
-    "distributor": "lianhua",
-    "distributor_url": "https://github.com/lianhua/FnDepot",
-    "bug_report_url": "https://github.com/upstream-owner/upstream-repo/issues",
-    "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/myapp/myapp.fpk",
-    "history": {
-      "v1.0.0": "初始版本"
+  "schema_version": "2",
+  "source_info": {
+    "name": "LianHua 飞牛应用源",
+    "author": "lianhua",
+    "homepage": "https://github.com/lianhua/FnDepot",
+    "description": "自动同步上游已打包的 .fpk 应用（FnDepot V2 源）"
+  },
+  "apps": {
+    "lemon-music": {
+      "display_name": "柠檬音乐",
+      "desc": "<b>多平台搜歌、本地音乐库、标签整理与高品质下载</b>。兼容落雪自定义音源，浏览器内完成找歌 → 试听 → 下载 → 整理。<br><br><b>亮点</b><br>· 搜索：酷我 / 酷狗 / QQ / 网易云 / 咪咕；FLAC · Hi-Res · 母带，支持批量下载<br>· 音乐库：每日推荐（本地+平台混搭）、推荐歌单、漫游播放<br>· 文件管理：标签编辑、清理（重复/小文件）、伪 FLAC 检测、按歌手整理<br>· 播放：全屏逐字歌词、频谱与风格配色<br><br><b>依赖</b>：应用中心 <b>Node.js v22</b>。目录可在安装向导或「访问权限」中指定；卸载可选保留配置。<br><br><b>免责声明</b>：仅供个人合法使用，请遵守当地法律与平台条款。",
+      "platform": [
+        "x86",
+        "arm"
+      ],
+      "categories": [
+        "影音娱乐"
+      ],
+      "icon_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/assets/ICON.PNG",
+      "run_as": "package",
+      "install_type": "",
+      "is_docker": false,
+      "service_port": "7983",
+      "os_min_version": "1.1.8",
+      "maintainer": "jia070310",
+      "maintainer_url": "https://github.com/jia070310/lemon-muisc",
+      "distributor": "jia070310",
+      "distributor_url": "https://github.com/jia070310/lemon-muisc",
+      "bug_report_url": "https://github.com/jia070310/lemon-muisc/issues",
+      "releases": {
+        "0.0.0": {
+          "updated_at": "2026-10-15T00:00:00+08:00",
+          "packages": {}
+        }
+      }
     }
   }
 }
