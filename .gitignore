@@ -1,0 +1,7 @@
+
+# 调试/临时文件
+r.json
+rid.txt
+run.json
+*.log
+logs*.zip
