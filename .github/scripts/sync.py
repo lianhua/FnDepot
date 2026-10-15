@@ -61,6 +61,20 @@ def read_manifest(fpk_path: str):
     return meta, icons
 
 
+def find_asset(rel: dict, app_id: str, ver: str, arch: str, cfg: dict):
+    """按上游资产文件名模板找下载链接。
+
+    不同上游包名格式不一致，用 asset_name 模板描述（占位符 {ver}/{arch}）。
+    未配置时默认 {app_id}-{ver}-{arch}.fpk（与 lemon-music 等通用命名一致）。
+    """
+    pattern = cfg.get("asset_name", "{app_id}-{ver}-{arch}.fpk")
+    target = pattern.format(app_id=app_id, ver=ver, arch=arch)
+    for a in rel.get("assets", []):
+        if a["name"] == target:
+            return a["browser_download_url"], target
+    return None, target
+
+
 def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
     """同步单个应用，返回是否发生变更"""
     repo = cfg["repo"]
@@ -84,11 +98,9 @@ def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
     os.makedirs(app_assets, exist_ok=True)
     packages, sample = {}, None
     for arch in archs:
-        url = next(
-            (a["browser_download_url"] for a in rel.get("assets", [])
-             if a["name"].endswith(f"-{arch}.fpk")), None)
+        url, target = find_asset(rel, app_id, ver, arch, cfg)
         if not url:
-            print(f"  [{arch}] 上游 release 没有该架构包")
+            print(f"  [{arch}] 上游 release 没有匹配资产（期望文件名 {target}）")
             continue
         data = fetch(url)
         path = f"{app_assets}/{app_id}-{ver}-{arch}.fpk"
@@ -111,10 +123,12 @@ def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
         with open(f"{app_assets}/{name}", "wb") as f:
             f.write(data)
 
-    # manifest 里的 appname 必须与索引键名一致，否则客户端匹配不上
+    # manifest 里的 appname 是 fnOS 实际注册的应用 ID；索引键名是我们给源的命名。
+    # 多数上游两者相同（如 lemon-music），但 workbuddy-fnos 内部叫 fnwb.workbuddy。
+    # 这里不再硬卡（否则直接跳过该应用），改为提示，由分发者决定是否统一。
     if meta.get("appname", app_id) != app_id:
-        raise RuntimeError(
-            f"appname 不一致: 索引={app_id}, fpk manifest={meta.get('appname')}")
+        print(f"  [提示] fpk 内部 appname={meta.get('appname')} 与索引键名 {app_id} 不同"
+              f" —— fnOS 将以 {meta.get('appname')} 注册，源内显示为 {app_id}")
 
     node["display_name"] = meta.get("display_name", node.get("display_name", ""))
     if meta.get("desc"):

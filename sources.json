@@ -3,6 +3,11 @@
     "lemon-music": {
       "repo": "jia070310/lemon-muisc",
       "archs": ["x86", "arm"]
+    },
+    "workbuddy-fnos": {
+      "repo": "mclhm8182/workbuddy-fnOS-installer",
+      "archs": ["x86", "arm"],
+      "asset_name": "fnwb.workbuddy_{ver}_{arch}.fpk"
     }
   }
 }
