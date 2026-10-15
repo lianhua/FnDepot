@@ -1,0 +1,85 @@
+name: sync-release-fpk
+
+on:
+  schedule:
+    - cron: "0 18 * * *"   # 每天 UTC 18:00 = 北京时间 02:00 检查上游
+  workflow_dispatch:        # 允许在 Actions 页面手动触发
+
+env:
+  # ===== 按你的实际情况改这三行 =====
+  UPSTREAM_REPO: upstream-owner/upstream-repo   # 上游仓库 owner/repo
+  APP_NAME: myapp                                # 应用 ID，必须与 fnpack.json 的键名一致
+  FPK_MATCH: ".fpk"                              # 上游 release assets 里 fpk 的文件名筛选
+  # ==================================   # 多个 fpk 时填如 "x86.fpk" / "aarch64.fpk"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 获取上游最新 release 信息
+        id: rel
+        run: |
+          json=$(curl -fsSL "https://api.github.com/repos/${UPSTREAM_REPO}/releases/latest")
+          ver=$(echo "$json"  | jq -r '.tag_name | ltrimstr("v")')
+          url=$(echo "$json"  | jq -r --arg m "${FPK_MATCH}" \
+                '[.assets[].browser_download_url | select(endswith($m))] | first // empty')
+          if [ -z "$ver" ] || [ "$ver" = "null" ]; then
+            echo "::error::获取上游 ${UPSTREAM_REPO} 最新 release 失败（仓库无 release？）"
+            exit 1
+          fi
+          if [ -z "$url" ]; then
+            echo "::error::release assets 里没找到匹配 ${FPK_MATCH} 的文件"
+            exit 1
+          fi
+          echo "ver=$ver" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: 检查是否有新版本
+        id: check
+        run: |
+          local_ver=$(jq -r ".${APP_NAME}.version" fnpack.json)
+          if [ "${{ steps.rel.outputs.ver }}" != "$local_ver" ]; then
+            echo "changed=true"  >> "$GITHUB_OUTPUT"
+            echo "发现新版本: $local_ver -> ${{ steps.rel.outputs.ver }}"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "已是最新版本 $local_ver，跳过"
+          fi
+
+      - name: 下载 fpk 并解出元数据
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          mkdir -p /tmp/fpkext
+          # .fpk 是 gzip 压缩 tar，外层含 manifest、ICON.PNG、cmd/、config/ 等
+          curl -fsSL -o "${APP_NAME}/${APP_NAME}.fpk" "${{ steps.rel.outputs.url }}"
+          tar -xzf "${APP_NAME}/${APP_NAME}.fpk" -C /tmp/fpkext
+          for f in ICON.PNG ICON_256.PNG; do
+            [ -f "/tmp/fpkext/$f" ] && cp "/tmp/fpkext/$f" "${APP_NAME}/$f"
+          done
+
+      - name: 更新 fnpack.json 并提交
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          ver="${{ steps.rel.outputs.ver }}"
+          # 展示信息直接从上游 fpk 的 manifest 提取，读不到就保留 fnpack.json 原值
+          get() { grep -oP "^$1=\K.*" /tmp/fpkext/manifest 2>/dev/null | head -n1; }
+          jq --arg v "$ver" \
+             --arg url "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/${APP_NAME}/${APP_NAME}.fpk" \
+             --arg name "$(get display_name)" \
+             --arg desc "$(get desc)" \
+             ".${APP_NAME}.version=\$v
+              | .${APP_NAME}.download_url=\$url
+              | (if \$name != \"\" then .${APP_NAME}.display_name=\$name else . end)
+              | (if \$desc != \"\" then .${APP_NAME}.desc=\$desc else . end)
+              | .${APP_NAME}.history[\"v\(\$v)\"]=\"自动同步上游 v\(\$v)\"" \
+             fnpack.json > fnpack.json.tmp
+          mv fnpack.json.tmp fnpack.json
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(sync): ${APP_NAME} -> v${ver}" || exit 0
+          git push

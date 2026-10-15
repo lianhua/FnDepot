@@ -1,0 +1,20 @@
+{
+  "myapp": {
+    "display_name": "My App",
+    "version": "1.0.0",
+    "desc": "应用简介，显示在商店列表里。支持\\n换行。",
+    "labels": "工具,开发",
+    "install_type": "存储空间",
+    "size": "20",
+    "platform": ["x86", "arm"],
+    "author": "上游作者名",
+    "author_url": "https://github.com/upstream-owner/upstream-repo",
+    "distributor": "lianhua",
+    "distributor_url": "https://github.com/lianhua/FnDepot",
+    "bug_report_url": "https://github.com/upstream-owner/upstream-repo/issues",
+    "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/myapp/myapp.fpk",
+    "history": {
+      "v1.0.0": "初始版本"
+    }
+  }
+}
