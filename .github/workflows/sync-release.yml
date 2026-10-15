@@ -91,7 +91,8 @@ jobs:
                                --arg h "$sha" --argjson s "$size" \
                                '. + {($a): {download_url:$u, sha256:$h, size:$s}}')
           done
-          echo "packages=$PKG" >> "$GITHUB_OUTPUT"
+          # GITHUB_OUTPUT 不接受多行值，必须用 jq -c 压成单行
+          echo "packages=$(echo "$PKG" | jq -c .)" >> "$GITHUB_OUTPUT"
 
       - name: 更新 fnpack.json 并提交
         if: steps.check.outputs.changed == 'true'
