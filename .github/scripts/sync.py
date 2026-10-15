@@ -22,7 +22,6 @@ API = "https://api.github.com/repos/{repo}/releases/latest"
 RAW_BASE = os.environ.get(
     "RAW_BASE", "https://raw.githubusercontent.com/lianhua/FnDepot/main"
 )
-ASSETS = "assets"
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -75,7 +74,8 @@ def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
         print(f"  已是最新版本 {ver}，跳过")
         return False
 
-    os.makedirs(ASSETS, exist_ok=True)
+    app_assets = os.path.join("assets", app_id)
+    os.makedirs(app_assets, exist_ok=True)
     packages, sample = {}, None
     for arch in archs:
         url = next(
@@ -85,7 +85,7 @@ def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
             print(f"  [{arch}] 上游 release 没有该架构包")
             continue
         data = fetch(url)
-        path = f"{ASSETS}/{app_id}-{ver}-{arch}.fpk"
+        path = f"{app_assets}/{app_id}-{ver}-{arch}.fpk"
         with open(path, "wb") as f:
             f.write(data)
         packages[arch] = {
@@ -102,7 +102,7 @@ def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
 
     meta, icons = read_manifest(sample)
     for name, data in icons.items():
-        with open(f"{ASSETS}/{name}", "wb") as f:
+        with open(f"{app_assets}/{name}", "wb") as f:
             f.write(data)
 
     # manifest 里的 appname 必须与索引键名一致，否则客户端匹配不上
@@ -115,7 +115,7 @@ def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
         node["desc"] = " ".join(meta["desc"].split())
     node["service_port"] = meta.get("service_port", "")
     node["os_min_version"] = meta.get("os_min_version", "")
-    node["icon_url"] = f"{RAW_BASE}/{ASSETS}/ICON.PNG"
+    node["icon_url"] = f"{RAW_BASE}/assets/{app_id}/ICON.PNG"
     node["releases"] = {
         ver: {
             "updated_at": rel.get("published_at", ""),
@@ -125,12 +125,11 @@ def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
     }
     print(f"  版本更新: {'/'.join(current) or '无'} -> {ver}")
 
-    # 清理本应用的旧版本包（其他应用的包不动，各应用各自清理自己的历史版本）
+    # 清理本应用的旧版本包（每个应用在自己的子目录里清理，互不干扰）
     keep = {f"{app_id}-{ver}-{arch}.fpk" for arch in packages}
-    prefix = f"{app_id}-"
-    for fn in sorted(os.listdir(ASSETS)):
-        if fn.endswith(".fpk") and fn.startswith(prefix) and fn not in keep:
-            os.remove(os.path.join(ASSETS, fn))
+    for fn in sorted(os.listdir(app_assets)):
+        if fn.endswith(".fpk") and fn not in keep:
+            os.remove(os.path.join(app_assets, fn))
             print(f"  清理旧包: {fn}")
     return True
 
