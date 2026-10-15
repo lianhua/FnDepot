@@ -50,7 +50,7 @@ jobs:
         env:
           VER: ${{ steps.rel.outputs.ver }}
         run: |
-          set -euo pipefail
+          set -eu
           mkdir -p assets
 
           # 1. 按架构下载
@@ -66,10 +66,26 @@ jobs:
           done
 
           # 2. 解包任一 fpk，取 manifest 元数据（manifest 是空格对齐的 key = value）
-          sample=$(ls assets/${APP_NAME}-${VER}-*.fpk | head -n1)
+          sample=""
+          for f in assets/${APP_NAME}-${VER}-*.fpk; do
+            if [ -f "$f" ]; then sample="$f"; break; fi
+          done
+          if [ -z "$sample" ]; then
+            echo "::error::没有下载到任何 fpk，请检查 FPK_ARCHS 与上游资产名"
+            exit 1
+          fi
+          echo "  解包样本: $sample"
           rm -rf /tmp/fpkext && mkdir -p /tmp/fpkext
           tar -xzf "$sample" -C /tmp/fpkext
-          get() { sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*//p" /tmp/fpkext/manifest | head -n1; }
+          # 用 awk 而非 sed|head，避免 pipefail 下被 SIGPIPE 打断
+          get() { awk -v k="$1" '{
+              line=$0; eq=index(line,"=");
+              if (eq==0) next;
+              key=substr(line,1,eq-1); val=substr(line,eq+1);
+              gsub(/^[ \t]+|[ \t\r]+$/,"",key);
+              gsub(/^[ \t]+/,"",val);
+              if (key==k) { sub(/[ \t\r]+$/,"",val); print val; exit }
+          }' /tmp/fpkext/manifest; }
 
           cp /tmp/fpkext/ICON.PNG     assets/ICON.PNG
           cp /tmp/fpkext/ICON_256.PNG assets/ICON_256.PNG
@@ -85,7 +101,7 @@ jobs:
           for arch in $FPK_ARCHS; do
             f="assets/${APP_NAME}-${VER}-${arch}.fpk"
             [ -f "$f" ] || continue
-            sha=$(sha256sum "$f" | cut -d' ' -f1)
+            sha=$(sha256sum "$f"); sha=${sha%% *}
             size=$(stat -c%s "$f")
             PKG=$(echo "$PKG" | jq --arg a "$arch" --arg u "${RAW_BASE}/assets/${APP_NAME}-${VER}-${arch}.fpk" \
                                --arg h "$sha" --argjson s "$size" \
@@ -105,7 +121,7 @@ jobs:
           DESC_B64: ${{ steps.desc }}
           PACKAGES: ${{ steps.packages }}
         run: |
-          set -euo pipefail
+          set -eu
           desc=$(printf '%s' "$DESC_B64" | base64 -d)
           # releases 整体重建，只保留当前最新版本，避免仓库无限膨胀
           jq --arg app "$APP_NAME" --arg v "$VER" --arg upd "$PUBLISHED" \
