@@ -27,6 +27,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 
 def fetch(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": "fndepot-sync"})
+    # GitHub API 请求带认证（未认证限 60 次/小时）；release 资产下载是重定向直链，不带
+    token = os.environ.get("GITHUB_TOKEN")
+    if token and "api.github.com" in url:
+        req.add_header("Authorization", f"Bearer {token}")
     with urllib.request.urlopen(req, timeout=120) as r:
         return r.read()
 
@@ -74,7 +78,9 @@ def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
         print(f"  已是最新版本 {ver}，跳过")
         return False
 
-    app_assets = os.path.join("assets", app_id)
+    # 每个应用一个顶层目录（目录名 = 应用 ID），路径用纯正斜杠拼接，
+    # 避免 Windows 上 os.path.join 产生反斜杠污染 fnpack.json 的 URL
+    app_assets = app_id
     os.makedirs(app_assets, exist_ok=True)
     packages, sample = {}, None
     for arch in archs:
@@ -115,7 +121,7 @@ def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
         node["desc"] = " ".join(meta["desc"].split())
     node["service_port"] = meta.get("service_port", "")
     node["os_min_version"] = meta.get("os_min_version", "")
-    node["icon_url"] = f"{RAW_BASE}/assets/{app_id}/ICON.PNG"
+    node["icon_url"] = f"{RAW_BASE}/{app_assets}/ICON.PNG"
     node["releases"] = {
         ver: {
             "updated_at": rel.get("published_at", ""),

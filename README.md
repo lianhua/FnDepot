@@ -9,9 +9,11 @@
 ```
 FnDepot/                          ← 仓库名必须是 FnDepot（Public，大小写敏感）
 ├── fnpack.json                   ← V2 格式应用源索引（Actions 自动维护）
-├── .github/workflows/
-│   └── sync-release.yml          ← 每天定时同步上游 release
-└── assets/
+├── sources.json                  ← 上游映射：应用 ID → 上游仓库 + 架构
+├── .github/
+│   ├── workflows/sync-release.yml  ← 每天定时同步上游 release
+│   └── scripts/sync.py             ← 同步脚本（纯标准库）
+└── lemon-music/                  ← 每个应用一个顶层目录，目录名 = 应用 ID
     ├── ICON.PNG / ICON_256.PNG   ← 从上游 fpk 自动提取
     └── lemon-music-<版本>-<架构>.fpk   ← 自动下载，只保留最新版
 ```
@@ -39,15 +41,20 @@ FnDepot/                          ← 仓库名必须是 FnDepot（Public，大�
 
 ## 维护者怎么改（一般不需要）
 
-想加新应用或换上游，改 `.github/workflows/sync-release.yml` 的三个变量：
+想加新应用，分两步：
 
-| 变量 | 说明 |
-|---|---|
-| `UPSTREAM_REPO` | 上游仓库 `owner/repo` |
-| `APP_NAME` | 应用 ID，**必须与上游 FPK manifest 里的 `appname` 完全一致**（大小写敏感） |
-| `FPK_ARCHS` | 要同步的架构，空格分隔，如 `"x86 arm"` 或 `"x86"` |
+1. 在 `sources.json` 的 `apps` 里加一条：
 
-改完在 `fnpack.json` 里补一个对应条目（键名 = `APP_NAME`，`releases` 初始写 `{"0.0.0": {"updated_at": "...", "packages": {}}}`），然后手动触发一次 workflow，它会自动抓取真实元数据、下载 fpk、算 sha256、填好索引。
+   ```json
+   "应用ID": {
+     "repo": "owner/repo",
+     "archs": ["x86", "arm"]
+   }
+   ```
+
+2. 在 `fnpack.json` 里补一个对应条目（键名 = 应用 ID，`releases` 初始写 `{"0.0.0": {"updated_at": "...", "packages": {}}}`）。
+
+然后手动触发一次 workflow，它会自动抓取真实元数据、建应用目录、下载 fpk、算 sha256、填好索引。**应用 ID 必须与上游 fpk manifest 里的 `appname` 完全一致（大小写敏感）**。
 
 ## 这个源做了什么自动化
 
@@ -55,7 +62,7 @@ FnDepot/                          ← 仓库名必须是 FnDepot（Public，大�
 
 1. 读上游 `releases/latest`，取 tag 作为版本号（自动去 `v` 前缀）
 2. 与源内版本比对，一致就跳过，不一致才动手
-3. 按 `FPK_ARCHS` 下载各架构 fpk 到 `assets/`
+3. 按 `archs` 下载各架构 fpk 到应用目录（仓库根的 `<应用ID>/`）
 4. 解包任一 fpk，从 `manifest` 提取 `display_name` / `desc` / `service_port` / `os_min_version` 和图标
 5. 计算 sha256 与字节数，写进 `fnpack.json` 的 `releases.<版本>.packages`
 6. 删除旧版本安装包（仓库只留最新版，不会无限膨胀）
@@ -65,6 +72,6 @@ FnDepot/                          ← 仓库名必须是 FnDepot（Public，大�
 
 - **上游 release 必须带 .fpk 资产**，且文件名带架构后缀（如 `-x86.fpk` / `-arm.fpk`），否则同步不到
 - **版本号一致性**：以 release tag 为准；tag 不带 `v` 前缀也能正确处理
-- **`APP_NAME` 必须等于上游 manifest 的 `appname`**，写错会导致客户端找不到对应条目
+- **应用 ID 必须等于上游 manifest 的 `appname`**，写错会导致客户端找不到对应条目
 - **下载走本仓库 raw**，而不是直接指向上游 release——这样国内可以配 GitHub 加速，稳定性更好；代价是每次更新要把 fpk 存进仓库
 - **先自测再分发**：x86 和 ARM NAS 上分别装一次，确认包选择和安装正常
