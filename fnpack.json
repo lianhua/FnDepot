@@ -29,19 +29,19 @@
       "distributor_url": "https://github.com/jia070310/lemon-muisc",
       "bug_report_url": "https://github.com/jia070310/lemon-muisc/issues",
       "releases": {
-        "1.2.17.10": {
-          "updated_at": "2026-10-17T04:06:36Z",
+        "1.2.17.14": {
+          "updated_at": "2026-10-21T15:12:07Z",
           "os_min_version": "1.1.8",
           "packages": {
             "x86": {
-              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/lemon-music/lemon-music-1.2.17.10-x86.fpk",
-              "sha256": "abe1f46197323a18b08ee0a3804f7d95e5393b7204141fe42081e519a6413aec",
-              "size": 5544768
+              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/lemon-music/lemon-music-1.2.17.14-x86.fpk",
+              "sha256": "3ca2c75830b7de19ffcc0b615c2549078a724c69fdb724ab73c0d57b7fd56029",
+              "size": 5554739
             },
             "arm": {
-              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/lemon-music/lemon-music-1.2.17.10-arm.fpk",
-              "sha256": "0002e44da8730e819393526e7465e8c72fef4a858829c9032c518fc3010a94f0",
-              "size": 5544786
+              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/lemon-music/lemon-music-1.2.17.14-arm.fpk",
+              "sha256": "738cd43cee9f4e366671eae8af706c4375f3371fc49d2db8ab79a5f3bf059f53",
+              "size": 5554742
             }
           }
         }
