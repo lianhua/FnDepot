@@ -69,19 +69,19 @@
       "distributor_url": "https://github.com/lianhua/FnDepot",
       "bug_report_url": "https://github.com/mclhm8182/workbuddy-fnOS-installer/issues",
       "releases": {
-        "1.2.4": {
-          "updated_at": "2026-10-10T16:11:46Z",
+        "1.2.6": {
+          "updated_at": "2026-11-03T03:17:24Z",
           "os_min_version": "1.1.3100",
           "packages": {
             "x86": {
-              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/workbuddy-fnos/workbuddy-fnos-1.2.4-x86.fpk",
-              "sha256": "c6996d7ae04e8884a4caaad4c770fa817fa8845c27839304d3e37aca39c174a1",
-              "size": 43720
+              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/workbuddy-fnos/workbuddy-fnos-1.2.6-x86.fpk",
+              "sha256": "7a724e05b71ad975800d502995a8a913695e06d85caa703bc71333be352c3ab1",
+              "size": 49010
             },
             "arm": {
-              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/workbuddy-fnos/workbuddy-fnos-1.2.4-arm.fpk",
-              "sha256": "a4d9f74762411ee0044a33742951f34eee462bef2d04cb3d300fe02ba10d37e3",
-              "size": 43719
+              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/workbuddy-fnos/workbuddy-fnos-1.2.6-arm.fpk",
+              "sha256": "575fae08d7fa91b13b9d241940b2d3545b2eeb1d9b11bbd1e4a5af576b58c5a8",
+              "size": 49013
             }
           }
         }
