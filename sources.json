@@ -8,6 +8,11 @@
       "repo": "mclhm8182/workbuddy-fnOS-installer",
       "archs": ["x86", "arm"],
       "asset_name": "fnwb.workbuddy_{ver}_{arch}.fpk"
+    },
+    "mooncast": {
+      "repo": "xiaohui1/mooncast",
+      "archs": ["x86", "arm"],
+      "asset_name": "mooncast_{ver}_{arch}.fpk"
     }
   }
 }
