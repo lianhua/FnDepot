@@ -133,7 +133,9 @@ def sync_app(app_id: str, cfg: dict, index: dict) -> bool:
     node["display_name"] = meta.get("display_name", node.get("display_name", ""))
     if meta.get("desc"):
         node["desc"] = " ".join(meta["desc"].split())
-    node["service_port"] = meta.get("service_port", "")
+    # 端口由安装向导决定时（${wizard_app_port} 之类）写死没有意义，置空
+    port = meta.get("service_port", "")
+    node["service_port"] = "" if port.startswith("${") else port
     node["os_min_version"] = meta.get("os_min_version", "")
     node["icon_url"] = f"{RAW_BASE}/{app_assets}/ICON.PNG"
     node["releases"] = {

@@ -126,6 +126,41 @@
           }
         }
       }
+    },
+    "aistream": {
+      "display_name": "AIStream 影视聚合",
+      "desc": "影视聚合播放站：采集站一键接入、IPTV 裸流播放、上游解析、会员与栏目权限、自动分类。支持 x86 / ARM 双架构。",
+      "platform": [
+        "x86",
+        "arm"
+      ],
+      "categories": [
+        "影音娱乐"
+      ],
+      "icon_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/aistream/ICON.PNG",
+      "run_as": "package",
+      "install_type": "",
+      "is_docker": false,
+      "service_port": "",
+      "os_min_version": "",
+      "maintainer": "xiaoluren",
+      "maintainer_url": "https://github.com/xiaolurenya/AIStream",
+      "distributor": "lianhua",
+      "distributor_url": "https://github.com/lianhua/FnDepot",
+      "bug_report_url": "https://github.com/xiaolurenya/AIStream/issues",
+      "releases": {
+        "1.5.47": {
+          "updated_at": "2026-11-24T11:47:40Z",
+          "os_min_version": "",
+          "packages": {
+            "all": {
+              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/aistream/aistream-1.5.47-all.fpk",
+              "sha256": "4e78f9b01577d6c6169582ad04c67873eb1c7e57d22a2770189d415146df5666",
+              "size": 10386
+            }
+          }
+        }
+      }
     }
   }
 }

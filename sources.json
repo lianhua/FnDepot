@@ -13,6 +13,11 @@
       "repo": "xiaohui1/mooncast",
       "archs": ["x86", "arm"],
       "asset_name": "mooncast_{ver}_{arch}.fpk"
+    },
+    "aistream": {
+      "repo": "xiaolurenya/AIStream",
+      "archs": ["all"],
+      "asset_name": "aistream-{ver}.fpk"
     }
   }
 }
