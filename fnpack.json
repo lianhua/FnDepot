@@ -89,7 +89,7 @@
     },
     "mooncast": {
       "display_name": "月映 · MoonCast",
-      "desc": "私人夸克云影院：PanSou 并发验活搜片、临时预览缓存池、302 极速直连、豆瓣/TMDB 双源海报刮削与文件夹级自动追更。",
+      "desc": "私人夸克云影院：多源高并发验活搜片、临时预览缓存池、302 极速直连、豆瓣/TMDB 双源海报刮削与文件夹级自动追更。",
       "platform": [
         "x86",
         "arm"
@@ -109,19 +109,19 @@
       "distributor_url": "https://github.com/lianhua/FnDepot",
       "bug_report_url": "https://github.com/xiaohui1/mooncast/issues",
       "releases": {
-        "1.3.4": {
-          "updated_at": "2026-11-26T14:20:42Z",
+        "1.4.2": {
+          "updated_at": "2026-11-27T14:50:50Z",
           "os_min_version": "0.8.0",
           "packages": {
             "x86": {
-              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/mooncast/mooncast-1.3.4-x86.fpk",
-              "sha256": "3201e1e6c08fb39d54f95f88534f1d731a7630d24dc1352b32e6db9c68477b3f",
-              "size": 14530293
+              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/mooncast/mooncast-1.4.2-x86.fpk",
+              "sha256": "cc672e94a7e2897a7e42fdfb0e2f97eb0df8cdd18ecada65b67fce80ec3aeffd",
+              "size": 14675471
             },
             "arm": {
-              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/mooncast/mooncast-1.3.4-arm.fpk",
-              "sha256": "acdbf5b6490059d3fbf167317c15a2ea466c03c62ec3b8f566248e644804d1b7",
-              "size": 12451678
+              "download_url": "https://raw.githubusercontent.com/lianhua/FnDepot/main/mooncast/mooncast-1.4.2-arm.fpk",
+              "sha256": "79f0894949e6b2d32bfb5da6373876436b4ada2455554b19126644ae209ffe75",
+              "size": 12584124
             }
           }
         }
